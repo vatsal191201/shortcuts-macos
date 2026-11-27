@@ -1,6 +1,6 @@
 import AppKit
 import ApplicationServices
-import ShortCutsCore
+import KeyPeekCore
 
 /// Reads the menu bar of another process through the public Accessibility API.
 ///

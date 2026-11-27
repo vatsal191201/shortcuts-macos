@@ -352,6 +352,21 @@ public struct AppState: Codable, Sendable, Equatable {
     public var launchAtLogin: Bool = false
 
     public init() {}
+
+    /// Each missing key gets its default value. A file from an older version, which lacks
+    /// keys that a newer version added, keeps all its other values.
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        let d = AppState()
+        ignoredApps = try c.decodeIfPresent([String].self, forKey: .ignoredApps) ?? d.ignoredApps
+        hidden = try c.decodeIfPresent(Set<String>.self, forKey: .hidden) ?? d.hidden
+        bookmarked = try c.decodeIfPresent(Set<String>.self, forKey: .bookmarked) ?? d.bookmarked
+        usage = try c.decodeIfPresent([String: Int].self, forKey: .usage) ?? d.usage
+        activationInterval = try c.decodeIfPresent(Double.self, forKey: .activationInterval) ?? d.activationInterval
+        showDisabled = try c.decodeIfPresent(Bool.self, forKey: .showDisabled) ?? d.showDisabled
+        showHidden = try c.decodeIfPresent(Bool.self, forKey: .showHidden) ?? d.showHidden
+        launchAtLogin = try c.decodeIfPresent(Bool.self, forKey: .launchAtLogin) ?? d.launchAtLogin
+    }
 }
 
 public final class StateStore: @unchecked Sendable {
@@ -361,10 +376,29 @@ public final class StateStore: @unchecked Sendable {
     public init(url: URL? = nil) {
         let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
             ?? URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent("Library/Application Support")
-        let dir = base.appendingPathComponent("ShortCuts", isDirectory: true)
+        let dir = base.appendingPathComponent("KeyPeek", isDirectory: true)
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-        self.url = url ?? dir.appendingPathComponent("state.json")
-        self.state = Self.load(from: self.url)
+        let fileURL = url ?? dir.appendingPathComponent("state.json")
+        if url == nil {
+            // Version 0.2.0 and earlier were named "ShortCuts".
+            Self.migrateLegacyState(from: base.appendingPathComponent("ShortCuts/state.json"), to: fileURL)
+        }
+        self.url = fileURL
+        self.state = Self.load(from: fileURL)
+    }
+
+    /// Copies the old state file when the new one does not exist yet. The old file stays.
+    @discardableResult
+    public static func migrateLegacyState(from legacy: URL, to current: URL) -> Bool {
+        let fm = FileManager.default
+        guard !fm.fileExists(atPath: current.path), fm.fileExists(atPath: legacy.path) else { return false }
+        do {
+            try fm.copyItem(at: legacy, to: current)
+            try fm.setAttributes([.posixPermissions: 0o600], ofItemAtPath: current.path)
+            return true
+        } catch {
+            return false
+        }
     }
 
     public static func load(from url: URL) -> AppState {

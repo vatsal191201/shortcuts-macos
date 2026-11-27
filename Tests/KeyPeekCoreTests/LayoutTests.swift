@@ -1,5 +1,5 @@
 import XCTest
-@testable import ShortCutsCore
+@testable import KeyPeekCore
 
 final class LayoutTests: XCTestCase {
 
@@ -25,6 +25,33 @@ final class LayoutTests: XCTestCase {
         XCTAssertEqual(rows.first, .showAll)
         XCTAssertFalse(rows.contains { if case .header = $0 { return true }; return false }, "no group headers with a query")
         XCTAssertEqual(rows.compactMap(\.entry).map(\.title), ["Save", "Save As"])
+    }
+
+    // MARK: State file
+
+    func testOldStateFilesKeepTheirValues() throws {
+        // A 0.1.0 file without "launchAtLogin" and with one custom value.
+        let old = #"{"activationInterval": 0.5, "usage": {"abc": 3}}"#.data(using: .utf8)!
+        let state = try JSONDecoder().decode(AppState.self, from: old)
+        XCTAssertEqual(state.activationInterval, 0.5)
+        XCTAssertEqual(state.usage, ["abc": 3])
+        XCTAssertEqual(state.launchAtLogin, false)
+        XCTAssertEqual(state.showDisabled, true)
+        XCTAssertEqual(try JSONDecoder().decode(AppState.self, from: Data("{}".utf8)), AppState())
+    }
+
+    func testLegacyStateIsCopiedOnce() throws {
+        let dir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let legacy = dir.appendingPathComponent("old.json")
+        let current = dir.appendingPathComponent("new.json")
+        try Data(#"{"showHidden": true}"#.utf8).write(to: legacy)
+
+        XCTAssertTrue(StateStore.migrateLegacyState(from: legacy, to: current))
+        XCTAssertEqual(StateStore.load(from: current).showHidden, true)
+        XCTAssertTrue(FileManager.default.fileExists(atPath: legacy.path), "the old file stays")
+        XCTAssertFalse(StateStore.migrateLegacyState(from: legacy, to: current), "never overwrites a new file")
     }
 
     func testEqualScoresKeepMenuOrder() {

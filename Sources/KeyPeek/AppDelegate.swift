@@ -1,7 +1,7 @@
 import AppKit
 import SwiftUI
 import UniformTypeIdentifiers
-import ShortCutsCore
+import KeyPeekCore
 
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
@@ -9,6 +9,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem?
     private var eventMonitor: Any?
     private var settingsWindow: NSWindow?
+    private var settingsModel: SettingsModel?
 
     private let store = StateStore()
     private var gesture = GestureDetector()
@@ -52,7 +53,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let mainMenu = NSMenu()
 
         let appItem = NSMenuItem()
-        appItem.submenu = NSMenu(title: "ShortCuts")
+        appItem.submenu = NSMenu(title: "KeyPeek")
         mainMenu.addItem(appItem)
 
         let editItem = NSMenuItem()
@@ -83,7 +84,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func buildStatusItem() {
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-        item.button?.image = NSImage(systemSymbolName: "keyboard", accessibilityDescription: "ShortCuts")
+        item.button?.image = NSImage(systemSymbolName: "keyboard", accessibilityDescription: "KeyPeek")
 
         let menu = NSMenu()
         menu.addItem(menuItem("Show Shortcuts", #selector(showPanel), ""))
@@ -92,7 +93,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(menuItem("Export Markdown…", #selector(exportMarkdown), ""))
         menu.addItem(menuItem("Settings…", #selector(openSettings), ","))
         menu.addItem(.separator())
-        menu.addItem(menuItem("Quit ShortCuts", #selector(quit), "q"))
+        menu.addItem(menuItem("Quit KeyPeek", #selector(quit), "q"))
 
         item.menu = menu
         statusItem = item
@@ -143,12 +144,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                                   styleMask: [.titled, .closable],
                                   backing: .buffered,
                                   defer: false)
-            window.title = "ShortCuts Settings"
+            window.title = "KeyPeek Settings"
             window.contentView = NSHostingViewFactory.make(model: model)
             window.center()
             window.isReleasedWhenClosed = false
             settingsWindow = window
+            settingsModel = model
         }
+        settingsModel?.reload()
         NSApp.activate(ignoringOtherApps: true)
         settingsWindow?.makeKeyAndOrderFront(nil)
     }

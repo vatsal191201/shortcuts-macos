@@ -1,6 +1,6 @@
 import AppKit
 import SwiftUI
-import ShortCutsCore
+import KeyPeekCore
 
 // MARK: - Model
 
@@ -244,7 +244,7 @@ final class PanelController {
         }
     }
 
-    /// The front app, or the last target when ShortCuts itself is in front.
+    /// The front app, or the last target when KeyPeek itself is in front.
     private func resolveTarget() -> NSRunningApplication? {
         guard let front = NSWorkspace.shared.frontmostApplication else { return nil }
         if front.processIdentifier == NSRunningApplication.current.processIdentifier {

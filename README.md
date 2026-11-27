@@ -1,22 +1,44 @@
-# ShortCuts for macOS
+# KeyPeek for macOS
 
 A menu-bar utility that shows the keyboard shortcuts of the app in front of you.
-Double-press **⌘** and a searchable panel lists every menu command of the frontmost
-application with its shortcut, grouped by menu and filterable as you type.
+Double-press **⌘** to peek at every menu command of the frontmost application with its
+shortcut. Search in words or in plain language, and press Return to run a command.
 
-![ShortCuts demo: double-press ⌘, arrow to a command, Return runs it](docs/demo.gif)
+KeyPeek was named ShortCuts up to version 0.2.0.
 
-[Full video (24.4 s, 1080p, with sound)](docs/demo.mp4). It shows version 0.2.0: arrow-key
+![KeyPeek demo: double-press ⌘, arrow to a command, Return runs it](docs/demo.gif)
+
+[Full video (24.4 s, 1080p, with sound)](docs/demo.mp4). It shows version 0.2.0, before the
+rename to KeyPeek and before plain-language search: arrow-key
 navigation, Return runs the command, ⌥ Return copies the shortcut, and the Show all shortcuts
 sheet. The panel and the sheet are faithful re-renders of the SwiftUI code in
-`Sources/ShortCuts/PanelController.swift` and `OverviewController.swift`, with 53 of Finder's
+`Sources/KeyPeek/PanelController.swift` and `OverviewController.swift`, with 53 of Finder's
 standard shortcuts as example data; the build and test lines are copied from a real CI run.
 The 0.1.0 video is attached to the [v0.1.0 release](https://github.com/vatsal191201/shortcuts-macos/releases/tag/v0.1.0).
 
-Built as a clean-room implementation after a static security audit of
+Built as an independent implementation after a static security audit of
 [KeyClu](https://github.com/Anze/KeyCluCask). No KeyClu code, assets, strings or
 bundle identifiers are used — the app is a separate program written from public
 macOS APIs.
+
+## Install
+
+KeyPeek runs on macOS 13 or later, on Apple Silicon and Intel Macs.
+
+1. Download the newest `KeyPeek-x.y.z.zip` from
+   [Releases](https://github.com/vatsal191201/shortcuts-macos/releases/latest), open it,
+   and move `KeyPeek.app` to Applications.
+2. Open KeyPeek. macOS shows a warning, because the app is not notarized yet. Click **Done**.
+3. Allow the app to open:
+   - **macOS 15 or later:** open System Settings > Privacy & Security. Find the line about
+     KeyPeek and click **Open Anyway**.
+   - **macOS 13 or 14:** in Finder, Control-click KeyPeek, choose **Open**, then click **Open**.
+4. Give Accessibility access: System Settings > Privacy & Security > Accessibility (on
+   macOS 27, "Device Control and Data Access"). Turn on **KeyPeek**.
+5. Double-press **⌘** in any app.
+
+After each update, macOS asks for Accessibility access again, because the app does not
+have a Developer ID signature yet. Remove the old entry and turn on the new one.
 
 ## Safety posture
 
@@ -36,7 +58,7 @@ This app keeps its privileges small:
   stores or sends the keys.
 - **Local state only.** Your settings, bookmarks, hidden flags and the use count of each
   shortcut that you run or copy live in
-  `~/Library/Application Support/ShortCuts/state.json` with `0600` permissions.
+  `~/Library/Application Support/KeyPeek/state.json` with `0600` permissions.
 - **Local search model.** Natural-language search uses a 5 MB lookup table inside the
   app (`Resources/semantic-model.bin`). It is not a neural network, and the app never
   downloads anything. The table opens only when you type in the panel, through a memory
@@ -54,9 +76,14 @@ Requires macOS 13+ and Xcode command line tools.
 ```bash
 swift build          # compile
 swift test           # unit tests for the pure logic
-bash scripts/build-app.sh   # assemble and ad-hoc sign dist/ShortCuts.app
-open dist/ShortCuts.app
+bash scripts/build-app.sh   # assemble and ad-hoc sign dist/KeyPeek.app
+UNIVERSAL=1 bash scripts/build-app.sh   # the same for Apple Silicon and Intel
+open dist/KeyPeek.app
 ```
+
+To publish a release, set the version in `Resources/Info.plist`, write
+`docs/releases/vX.Y.Z.md`, and push the tag `vX.Y.Z`. GitHub Actions then runs the tests,
+builds the universal app, and publishes the zip with its SHA-256.
 
 On first launch, allow the app under **System Settings → Privacy & Security →
 Accessibility**, then quit and reopen it.
@@ -85,8 +112,8 @@ Accessibility**, then quit and reopen it.
 ## Layout
 
 ```
-Sources/ShortCutsCore/   pure logic: AX parsing, menu flattening, search, export, storage
-Sources/ShortCuts/       AppKit/SwiftUI shell: event monitor, panel, settings
+Sources/KeyPeekCore/   pure logic: AX parsing, menu flattening, search, export, storage
+Sources/KeyPeek/       AppKit/SwiftUI shell: event monitor, panel, settings
 Resources/               Info.plist, app icon, semantic-model.bin
 scripts/                 build-app.sh, build-semantic-model.py
 Tests/                   unit tests for the core
@@ -97,7 +124,7 @@ Tests/                   unit tests for the core
 `scripts/build-semantic-model.py` makes `Resources/semantic-model.bin`. It downloads
 `minishlab/potion-base-32M` at a pinned revision, checks the SHA-256 of each file,
 reduces the vectors from 512 to 64 numbers with PCA, and stores them as 8-bit values.
-It also writes `Tests/ShortCutsCoreTests/Fixtures/semantic-fixture.json`, so the Swift
+It also writes `Tests/KeyPeekCoreTests/Fixtures/semantic-fixture.json`, so the Swift
 tests can check that the Swift tokenizer and vectors match the Python reference.
 The script is the only part of the project that uses the network.
 

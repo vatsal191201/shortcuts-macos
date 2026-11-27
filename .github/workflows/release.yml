@@ -1,0 +1,50 @@
+name: release
+
+# Push a tag such as v0.3.0 to publish a release. The tag must match the version in
+# Resources/Info.plist, and docs/releases/<tag>.md must hold the release notes.
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write   # needed to create the release; nothing else
+
+jobs:
+  release:
+    runs-on: macos-latest
+    steps:
+      # actions/checkout v4.2.2, pinned to a commit because this job can write releases.
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+
+      - name: Check version and notes
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          PLIST_VERSION="$(plutil -extract CFBundleShortVersionString raw Resources/Info.plist)"
+          if [ "$VERSION" != "$PLIST_VERSION" ]; then
+            echo "Tag $GITHUB_REF_NAME does not match Info.plist version $PLIST_VERSION"; exit 1
+          fi
+          test -f "docs/releases/${GITHUB_REF_NAME}.md" || { echo "Missing docs/releases/${GITHUB_REF_NAME}.md"; exit 1; }
+
+      - name: Test
+        run: swift test
+
+      - name: Build universal app (Apple Silicon and Intel)
+        run: UNIVERSAL=1 bash scripts/build-app.sh
+
+      - name: Package
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          lipo -archs dist/KeyPeek.app/Contents/MacOS/KeyPeek
+          codesign --verify --strict dist/KeyPeek.app
+          ditto -c -k --sequesterRsrc --keepParent dist/KeyPeek.app "KeyPeek-${VERSION}.zip"
+          shasum -a 256 "KeyPeek-${VERSION}.zip" | tee "KeyPeek-${VERSION}.zip.sha256"
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          gh release create "$GITHUB_REF_NAME" \
+            "KeyPeek-${VERSION}.zip" "KeyPeek-${VERSION}.zip.sha256" \
+            --title "KeyPeek ${VERSION}" \
+            --notes-file "docs/releases/${GITHUB_REF_NAME}.md"

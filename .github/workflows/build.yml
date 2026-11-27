@@ -27,6 +27,6 @@ jobs:
       - name: Upload app
         uses: actions/upload-artifact@v4
         with:
-          name: ShortCuts-app
-          path: dist/ShortCuts.app
+          name: KeyPeek-app
+          path: dist/KeyPeek.app
           if-no-files-found: error

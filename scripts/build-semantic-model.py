@@ -46,7 +46,7 @@ DIMS = 64
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT_MODEL = os.path.join(ROOT, "Resources", "semantic-model.bin")
-OUT_FIXTURE = os.path.join(ROOT, "Tests", "ShortCutsCoreTests", "Fixtures", "semantic-fixture.json")
+OUT_FIXTURE = os.path.join(ROOT, "Tests", "KeyPeekCoreTests", "Fixtures", "semantic-fixture.json")
 
 # Strings for the tokenizer and vector parity tests.
 FIXTURE_TEXTS = [

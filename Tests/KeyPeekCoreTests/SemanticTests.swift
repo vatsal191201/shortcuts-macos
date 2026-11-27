@@ -1,5 +1,5 @@
 import XCTest
-@testable import ShortCutsCore
+@testable import KeyPeekCore
 
 final class SemanticTests: XCTestCase {
 
@@ -18,7 +18,7 @@ final class SemanticTests: XCTestCase {
     }
 
     private func loadFixture() throws -> Fixture {
-        let url = Self.repoRoot.appendingPathComponent("Tests/ShortCutsCoreTests/Fixtures/semantic-fixture.json")
+        let url = Self.repoRoot.appendingPathComponent("Tests/KeyPeekCoreTests/Fixtures/semantic-fixture.json")
         return try JSONDecoder().decode(Fixture.self, from: Data(contentsOf: url))
     }
 

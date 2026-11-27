@@ -1,7 +1,7 @@
 import XCTest
-@testable import ShortCutsCore
+@testable import KeyPeekCore
 
-final class ShortCutsCoreTests: XCTestCase {
+final class KeyPeekCoreTests: XCTestCase {
 
     // MARK: Modifiers
 
