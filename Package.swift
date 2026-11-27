@@ -2,16 +2,16 @@
 import PackageDescription
 
 let package = Package(
-    name: "ShortCuts",
+    name: "KeyPeek",
     platforms: [.macOS(.v13)],
     products: [
-        .executable(name: "ShortCuts", targets: ["ShortCuts"]),
-        .library(name: "ShortCutsCore", targets: ["ShortCutsCore"]),
+        .executable(name: "KeyPeek", targets: ["KeyPeek"]),
+        .library(name: "KeyPeekCore", targets: ["KeyPeekCore"]),
     ],
     targets: [
-        .target(name: "ShortCutsCore"),
-        .executableTarget(name: "ShortCuts", dependencies: ["ShortCutsCore"]),
+        .target(name: "KeyPeekCore"),
+        .executableTarget(name: "KeyPeek", dependencies: ["KeyPeekCore"]),
         // The tests read Fixtures/ and Resources/semantic-model.bin by file path.
-        .testTarget(name: "ShortCutsCoreTests", dependencies: ["ShortCutsCore"], exclude: ["Fixtures"]),
+        .testTarget(name: "KeyPeekCoreTests", dependencies: ["KeyPeekCore"], exclude: ["Fixtures"]),
     ]
 )

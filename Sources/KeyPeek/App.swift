@@ -1,7 +1,7 @@
 import AppKit
 
 @main
-enum ShortCutsApp {
+enum KeyPeekApp {
     @MainActor
     static func main() {
         let application = NSApplication.shared

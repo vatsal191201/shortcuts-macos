@@ -1,7 +1,7 @@
 import AppKit
 import ServiceManagement
 import SwiftUI
-import ShortCutsCore
+import KeyPeekCore
 
 @MainActor
 final class SettingsModel: ObservableObject {
@@ -13,18 +13,26 @@ final class SettingsModel: ObservableObject {
         self.state = store.state
     }
 
-    func save() {
-        store.mutate { $0 = self.state }
+    /// Takes the newest state, for example use counts that the panel wrote while Settings was closed.
+    func reload() {
+        state = store.state
+    }
+
+    /// Writes only the field that changed. A full copy would erase changes that the panel made
+    /// after Settings opened, such as use counts.
+    func save<T>(_ keyPath: WritableKeyPath<AppState, T>) {
+        let value = state[keyPath: keyPath]
+        store.mutate { $0[keyPath: keyPath] = value }
     }
 
     func unignore(_ bundleID: String) {
         state.ignoredApps.removeAll { $0 == bundleID }
-        save()
+        save(\.ignoredApps)
     }
 
     func setLaunchAtLogin(_ enabled: Bool) {
         state.launchAtLogin = enabled
-        save()
+        save(\.launchAtLogin)
         do {
             if enabled {
                 try SMAppService.mainApp.register()
@@ -33,7 +41,7 @@ final class SettingsModel: ObservableObject {
             }
         } catch {
             state.launchAtLogin = !enabled
-            save()
+            save(\.launchAtLogin)
         }
     }
 }
@@ -108,7 +116,7 @@ struct SettingsView: View {
             get: { model.state[keyPath: keyPath] },
             set: { newValue in
                 model.state[keyPath: keyPath] = newValue
-                model.save()
+                model.save(keyPath)
             }
         )
     }

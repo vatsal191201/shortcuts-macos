@@ -1,5 +1,5 @@
 import AppKit
-import ShortCutsCore
+import KeyPeekCore
 
 /// Runs a menu command in another app on behalf of the user.
 ///
@@ -8,7 +8,7 @@ import ShortCutsCore
 /// main thread because an app can hold its reply while it shows a modal dialog.
 enum CommandRunner {
 
-    private static let queue = DispatchQueue(label: "ShortCuts.press", qos: .userInitiated)
+    private static let queue = DispatchQueue(label: "KeyPeek.press", qos: .userInitiated)
 
     /// Makes `app` the active app.
     static func activate(_ app: NSRunningApplication) {

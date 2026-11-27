@@ -1,6 +1,6 @@
 import AppKit
 import SwiftUI
-import ShortCutsCore
+import KeyPeekCore
 
 /// One menu and its shortcuts in the overview.
 struct ShortcutGroup: Identifiable {
