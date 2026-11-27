@@ -36,6 +36,11 @@ This app keeps its privileges small:
 - **Local state only.** Your settings, bookmarks, hidden flags and the use count of each
   shortcut that you run or copy live in
   `~/Library/Application Support/ShortCuts/state.json` with `0600` permissions.
+- **Local search model.** Natural-language search uses a 5 MB lookup table inside the
+  app (`Resources/semantic-model.bin`). It is not a neural network, and the app never
+  downloads anything. The table opens only when you type in the panel, through a memory
+  map. A query takes well under 1 ms, and the first query for a large app (1,000 menu
+  items) takes about 10 ms.
 
 The one privileged thing it needs is Accessibility, which macOS requires for any app
 that reads another app's UI. Grant it in System Settings → Privacy & Security →
@@ -60,6 +65,11 @@ Accessibility**, then quit and reopen it.
 - Double-press **⌘** to open the panel for the frontmost app.
 - Type to filter by action, menu path or shortcut. The search field accepts ⌘A, ⌘C,
   ⌘V, ⌘X, ⌘Z and the usual delete keys.
+- Type in plain words, for example "refresh", "make text bigger" or "incognito".
+  Word matches come first. Below them, a **Similar** section shows commands with a
+  similar meaning. A Similar row gets the first highlight only when the match is
+  strong. Otherwise the highlight stays on "Show all shortcuts", so Return never runs
+  a weak guess.
 - Use **↑** and **↓** to move the selection. Page Up, Page Down, Home and End also work.
   When you move the pointer over a row, that row becomes the selection.
 - Press **Return** or click a row to run that command in the app. Disabled commands
@@ -76,8 +86,19 @@ Accessibility**, then quit and reopen it.
 ```
 Sources/ShortCutsCore/   pure logic: AX parsing, menu flattening, search, export, storage
 Sources/ShortCuts/       AppKit/SwiftUI shell: event monitor, panel, settings
+Resources/               Info.plist, app icon, semantic-model.bin
+scripts/                 build-app.sh, build-semantic-model.py
 Tests/                   unit tests for the core
 ```
+
+### The search model
+
+`scripts/build-semantic-model.py` makes `Resources/semantic-model.bin`. It downloads
+`minishlab/potion-base-32M` at a pinned revision, checks the SHA-256 of each file,
+reduces the vectors from 512 to 64 numbers with PCA, and stores them as 8-bit values.
+It also writes `Tests/ShortCutsCoreTests/Fixtures/semantic-fixture.json`, so the Swift
+tests can check that the Swift tokenizer and vectors match the Python reference.
+The script is the only part of the project that uses the network.
 
 The split exists so the tricky parts (modifier masks, key glyphs, stable IDs,
 search ranking, Markdown escaping) are testable without a screen or permissions.
@@ -92,3 +113,9 @@ search ranking, Markdown escaping) are testable without a screen or permissions.
 ## Licence
 
 MIT. See `LICENSE`.
+
+`Resources/semantic-model.bin` is derived from
+[minishlab/potion-base-32M](https://huggingface.co/minishlab/potion-base-32M)
+(MIT License, revision `1e5a03f8eeb2c98b928fbbd846f22f816360919f`). That model is
+distilled from [BAAI/bge-base-en-v1.5](https://huggingface.co/BAAI/bge-base-en-v1.5)
+(MIT License).

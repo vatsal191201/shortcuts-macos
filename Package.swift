@@ -11,6 +11,7 @@ let package = Package(
     targets: [
         .target(name: "ShortCutsCore"),
         .executableTarget(name: "ShortCuts", dependencies: ["ShortCutsCore"]),
-        .testTarget(name: "ShortCutsCoreTests", dependencies: ["ShortCutsCore"]),
+        // The tests read Fixtures/ and Resources/semantic-model.bin by file path.
+        .testTarget(name: "ShortCutsCoreTests", dependencies: ["ShortCutsCore"], exclude: ["Fixtures"]),
     ]
 )
