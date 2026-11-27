@@ -145,13 +145,16 @@ public struct MenuNode: Identifiable, Hashable, Codable, Sendable {
     public var shortcut: Shortcut?
     public var enabled: Bool
     public var children: [MenuNode]
+    /// Child indices from the menu bar to this element in the live Accessibility tree.
+    public var indexPath: [Int]
 
-    public init(id: String, title: String, shortcut: Shortcut?, enabled: Bool, children: [MenuNode]) {
+    public init(id: String, title: String, shortcut: Shortcut?, enabled: Bool, children: [MenuNode], indexPath: [Int] = []) {
         self.id = id
         self.title = title
         self.shortcut = shortcut
         self.enabled = enabled
         self.children = children
+        self.indexPath = indexPath
     }
 }
 
@@ -166,6 +169,8 @@ public struct ShortcutEntry: Identifiable, Hashable, Codable, Sendable {
     public var isHidden: Bool
     public var isBookmarked: Bool
     public var used: Int
+    /// Where the menu item was in the live Accessibility tree. Used to find it again before a press.
+    public var indexPath: [Int]
 
     public init(appName: String,
                 appBundleID: String?,
@@ -175,7 +180,8 @@ public struct ShortcutEntry: Identifiable, Hashable, Codable, Sendable {
                 enabled: Bool,
                 isHidden: Bool = false,
                 isBookmarked: Bool = false,
-                used: Int = 0) {
+                used: Int = 0,
+                indexPath: [Int] = []) {
         self.appName = appName
         self.appBundleID = appBundleID
         self.path = path
@@ -185,6 +191,7 @@ public struct ShortcutEntry: Identifiable, Hashable, Codable, Sendable {
         self.isHidden = isHidden
         self.isBookmarked = isBookmarked
         self.used = used
+        self.indexPath = indexPath
         self.id = Self.makeID(appName: appName, path: path, title: title, shortcut: shortcut)
     }
 
@@ -222,7 +229,8 @@ public enum MenuFlattener {
                                              path: path,
                                              title: node.title,
                                              shortcut: sc,
-                                             enabled: node.enabled))
+                                             enabled: node.enabled,
+                                             indexPath: node.indexPath))
                 }
                 return
             }
@@ -241,16 +249,18 @@ public enum Search {
     public static func filter(_ entries: [ShortcutEntry], query: String) -> [ShortcutEntry] {
         let q = query.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         guard !q.isEmpty else { return entries }
-        return entries
-            .compactMap { entry -> (ShortcutEntry, Int)? in
+        // Ties keep the menu order, so the same query always gives the same list.
+        return entries.enumerated()
+            .compactMap { index, entry -> (entry: ShortcutEntry, score: Int, index: Int)? in
                 guard let score = score(entry: entry, query: q) else { return nil }
-                return (entry, score)
+                return (entry, score, index)
             }
             .sorted { a, b in
-                if a.1 != b.1 { return a.1 > b.1 }
-                return a.0.title.count < b.0.title.count
+                if a.score != b.score { return a.score > b.score }
+                if a.entry.title.count != b.entry.title.count { return a.entry.title.count < b.entry.title.count }
+                return a.index < b.index
             }
-            .map(\.0)
+            .map(\.entry)
     }
 
     static func score(entry: ShortcutEntry, query: String) -> Int? {

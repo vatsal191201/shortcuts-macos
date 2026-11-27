@@ -13,19 +13,63 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let store = StateStore()
     private var gesture = GestureDetector()
     private var panel: PanelController?
+    private var overview: OverviewController?
 
     // MARK: - Lifecycle
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        panel = PanelController(store: store)
+        let overview = OverviewController(store: store)
+        let panel = PanelController(store: store)
+        panel.onShowAll = { app, name, icon, entries in
+            overview.show(app: app, name: name, icon: icon, entries: entries)
+        }
+        self.panel = panel
+        self.overview = overview
         gesture.interval = store.state.activationInterval
 
+        installMainMenu()
         buildStatusItem()
         installEventMonitor()
 
         if !AXReader.isTrusted(prompt: false) {
             _ = AXReader.isTrusted(prompt: true)
         }
+    }
+
+    /// The menu-bar icon can be hidden by the notch or a menu-bar manager.
+    /// Opening the app again from Finder or Spotlight then opens Settings.
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        openSettings()
+        return false
+    }
+
+    // MARK: - Main menu
+
+    /// An app without a main menu gets no ⌘A, ⌘C, ⌘V, ⌘X or ⌘Z in its text fields,
+    /// because AppKit sends these keys through the Edit menu. The menu bar stays hidden
+    /// for this accessory app, but the key equivalents work.
+    private func installMainMenu() {
+        let mainMenu = NSMenu()
+
+        let appItem = NSMenuItem()
+        appItem.submenu = NSMenu(title: "ShortCuts")
+        mainMenu.addItem(appItem)
+
+        let editItem = NSMenuItem()
+        let edit = NSMenu(title: "Edit")
+        edit.addItem(withTitle: "Undo", action: Selector(("undo:")), keyEquivalent: "z")
+        let redo = edit.addItem(withTitle: "Redo", action: Selector(("redo:")), keyEquivalent: "z")
+        redo.keyEquivalentModifierMask = [.command, .shift]
+        edit.addItem(.separator())
+        edit.addItem(withTitle: "Cut", action: #selector(NSText.cut(_:)), keyEquivalent: "x")
+        edit.addItem(withTitle: "Copy", action: #selector(NSText.copy(_:)), keyEquivalent: "c")
+        edit.addItem(withTitle: "Paste", action: #selector(NSText.paste(_:)), keyEquivalent: "v")
+        edit.addItem(withTitle: "Delete", action: #selector(NSText.delete(_:)), keyEquivalent: "")
+        edit.addItem(withTitle: "Select All", action: #selector(NSText.selectAll(_:)), keyEquivalent: "a")
+        editItem.submenu = edit
+        mainMenu.addItem(editItem)
+
+        NSApp.mainMenu = mainMenu
     }
 
     func applicationWillTerminate(_ notification: Notification) {
@@ -43,6 +87,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         let menu = NSMenu()
         menu.addItem(menuItem("Show Shortcuts", #selector(showPanel), ""))
+        menu.addItem(menuItem("Show All Shortcuts", #selector(showAllShortcuts), ""))
         menu.addItem(.separator())
         menu.addItem(menuItem("Export Markdown…", #selector(exportMarkdown), ""))
         menu.addItem(menuItem("Settings…", #selector(openSettings), ","))
@@ -85,6 +130,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     @objc private func showPanel() {
         gesture.interval = store.state.activationInterval
         panel?.show()
+    }
+
+    @objc private func showAllShortcuts() {
+        panel?.showAllForFrontmost()
     }
 
     @objc private func openSettings() {
