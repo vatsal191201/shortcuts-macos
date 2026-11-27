@@ -249,8 +249,13 @@ public enum Search {
     public static func filter(_ entries: [ShortcutEntry], query: String) -> [ShortcutEntry] {
         let q = query.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         guard !q.isEmpty else { return entries }
-        // Ties keep the menu order, so the same query always gives the same list.
-        return entries.enumerated()
+        return ranked(entries, query: q).map(\.entry)
+    }
+
+    /// Word matches with their scores, best first. `query` must be trimmed and lowercased.
+    /// Ties keep the menu order, so the same query always gives the same list.
+    static func ranked(_ entries: [ShortcutEntry], query q: String) -> [(entry: ShortcutEntry, score: Int)] {
+        entries.enumerated()
             .compactMap { index, entry -> (entry: ShortcutEntry, score: Int, index: Int)? in
                 guard let score = score(entry: entry, query: q) else { return nil }
                 return (entry, score, index)
@@ -260,7 +265,7 @@ public enum Search {
                 if a.entry.title.count != b.entry.title.count { return a.entry.title.count < b.entry.title.count }
                 return a.index < b.index
             }
-            .map(\.entry)
+            .map { ($0.entry, $0.score) }
     }
 
     static func score(entry: ShortcutEntry, query: String) -> Int? {

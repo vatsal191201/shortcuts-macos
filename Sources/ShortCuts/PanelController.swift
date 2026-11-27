@@ -18,6 +18,9 @@ final class PanelModel: ObservableObject {
 
     private(set) var entries: [ShortcutEntry] = []
 
+    /// Meaning-based search for this panel. The model opens on the first query only.
+    private var semantic: SemanticIndex?
+
     /// The pointer position at the last keyboard move or list change.
     /// Hover selects a row only after the pointer leaves this position, so a resting pointer
     /// or a scroll under the pointer never changes the selection.
@@ -35,12 +38,14 @@ final class PanelModel: ObservableObject {
         self.appName = appName
         self.appIcon = icon
         self.entries = entries
+        self.semantic = SemanticIndex(entries: entries, model: { SemanticModel.shared })
         if query.isEmpty { rebuild() } else { query = "" }
     }
 
     func rebuild() {
-        rows = PanelLayout.rows(entries: entries, query: query)
-        selectedID = PanelLayout.defaultSelection(in: rows, query: query)
+        let layout = PanelLayout.build(entries: entries, query: query, semantic: semantic)
+        rows = layout.rows
+        selectedID = layout.defaultSelection
         scrollTarget = PanelRow.showAllID
         pointerAnchor = NSEvent.mouseLocation
     }
