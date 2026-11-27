@@ -4,13 +4,14 @@ A menu-bar utility that shows the keyboard shortcuts of the app in front of you.
 Double-press **⌘** and a searchable panel lists every menu command of the frontmost
 application with its shortcut, grouped by menu and filterable as you type.
 
-![ShortCuts demo: double-press ⌘, filter, copy a shortcut](docs/demo.gif)
+![ShortCuts demo: double-press ⌘, arrow to a command, Return runs it](docs/demo.gif)
 
-[Full video (23.7 s, 1080p, with sound)](docs/demo.mp4). The panel is a faithful re-render
-of the SwiftUI code in `Sources/ShortCuts/PanelController.swift` with Finder's standard
-shortcuts as example rows; the build and test lines are copied from a real CI run.
-The video shows version 0.1.0. In that version, a click copied the shortcut. Now a click or
-Return runs the command, and ⌥ with a click or Return copies it.
+[Full video (24.4 s, 1080p, with sound)](docs/demo.mp4). It shows version 0.2.0: arrow-key
+navigation, Return runs the command, ⌥ Return copies the shortcut, and the Show all shortcuts
+sheet. The panel and the sheet are faithful re-renders of the SwiftUI code in
+`Sources/ShortCuts/PanelController.swift` and `OverviewController.swift`, with 53 of Finder's
+standard shortcuts as example data; the build and test lines are copied from a real CI run.
+The 0.1.0 video is attached to the [v0.1.0 release](https://github.com/vatsal191201/shortcuts-macos/releases/tag/v0.1.0).
 
 Built as a clean-room implementation after a static security audit of
 [KeyClu](https://github.com/Anze/KeyCluCask). No KeyClu code, assets, strings or
