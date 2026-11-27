@@ -6,15 +6,17 @@ shortcut. Search in words or in plain language, and press Return to run a comman
 
 KeyPeek was named ShortCuts up to version 0.2.0.
 
-![KeyPeek demo: double-press ⌘, arrow to a command, Return runs it](docs/demo.gif)
+![KeyPeek demo: double-press ⌘ in any app, type what you want, Return runs it](docs/demo.gif)
 
-[Full video (24.4 s, 1080p, with sound)](docs/demo.mp4). It shows version 0.2.0, before the
-rename to KeyPeek and before plain-language search: arrow-key
-navigation, Return runs the command, ⌥ Return copies the shortcut, and the Show all shortcuts
-sheet. The panel and the sheet are faithful re-renders of the SwiftUI code in
-`Sources/KeyPeek/PanelController.swift` and `OverviewController.swift`, with 53 of Finder's
-standard shortcuts as example data; the build and test lines are copied from a real CI run.
-The 0.1.0 video is attached to the [v0.1.0 release](https://github.com/vatsal191201/shortcuts-macos/releases/tag/v0.1.0).
+[Full video (24.6 s, 1080p, with sound)](docs/demo.mp4). It shows version 0.3.0: the same
+double-press ⌘ in Safari, Finder and Notes, plain-language search ("make text bigger" finds
+Zoom In, "checkbox" finds Checklist), and Return running the command. The panel is a faithful
+re-render of the SwiftUI code in `Sources/KeyPeek/PanelController.swift`, with standard Safari,
+Finder and Notes shortcuts as example data. The Similar results come from a Python port of the
+app's search and its bundled model, checked against `Tests/KeyPeekCoreTests/Fixtures/semantic-fixture.json`.
+The web page, note and folders behind the panel are illustrative.
+Earlier videos are attached to the [v0.2.0](https://github.com/vatsal191201/shortcuts-macos/releases/tag/v0.2.0)
+and [v0.1.0](https://github.com/vatsal191201/shortcuts-macos/releases/tag/v0.1.0) releases.
 
 Built as an independent implementation after a static security audit of
 [KeyClu](https://github.com/Anze/KeyCluCask). No KeyClu code, assets, strings or
