@@ -58,11 +58,12 @@ final class PanelModel: ObservableObject {
         pointerAnchor = NSEvent.mouseLocation
     }
 
+    /// Called for every pointer move over a row.
     func hover(_ id: String) {
         let location = NSEvent.mouseLocation
         if let anchor = pointerAnchor, anchor == location { return }
         pointerAnchor = nil
-        selectedID = id
+        if selectedID != id { selectedID = id }
     }
 }
 
@@ -391,7 +392,7 @@ struct PanelView: View {
         case .showAll:
             ShowAllRow(count: model.totalCount, selected: selected)
                 .contentShape(Rectangle())
-                .onHover { inside in if inside { model.hover(row.id) } }
+                .onContinuousHover { phase in if case .active = phase { model.hover(row.id) } }
                 .onTapGesture { onActivate(row, false) }
         case .header(let title):
             Text(title)
@@ -404,7 +405,7 @@ struct PanelView: View {
         case .item(let entry):
             ShortcutRow(entry: entry, selected: selected, showPath: !model.query.isEmpty)
                 .contentShape(Rectangle())
-                .onHover { inside in if inside { model.hover(row.id) } }
+                .onContinuousHover { phase in if case .active = phase { model.hover(row.id) } }
                 .onTapGesture {
                     onActivate(row, NSEvent.modifierFlags.contains(.option))
                 }
